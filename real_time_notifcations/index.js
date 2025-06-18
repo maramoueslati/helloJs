@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+const notifications = [];
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
