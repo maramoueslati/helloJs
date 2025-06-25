@@ -25,23 +25,25 @@ app.get('/', (req, res) => {
       res.status(200).send({ "text": "Hello iam alive" });
 
 })
-app.post('/send-notification', (req, res) => {
-  const { title, body } = req.body;
-  const message = { title, body };
-  console.log('📨 Received notification:', message); 
-  // Save to notifications list
-  notifications.push(message);
 
+app.post('/send-notification', (req, res) => {
+  const { title, message } = req.body;
+  const body = { title, message};
+  console.log('📨 Received notificatio', body) ;
+  // Save to notifications list
+  notifications.push(body);
+ 
   // Send to connected clients
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message));
+      client.send(JSON.stringify(body));
     }
   });
-
+ 
   res.status(200).send({ success: true });
 });
-
+ 
+ 
 
 
 app.get('/notifications', (req, res) => {
