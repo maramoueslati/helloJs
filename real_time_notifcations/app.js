@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 app.post('/send-notification', (req, res) => {
   const { title, body } = req.body;
   const message = { title, body };
-
+  console.log('📨 Received notification:', message); 
   // Save to notifications list
   notifications.push(message);
 
