@@ -1,56 +1,43 @@
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const cors = require('cors');
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
+const { Server } = require("socket.io");
+
 const app = express();
-app.use(cors());
-app.use(express.json());
-const notifications = [];
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-const clients = new Set();
-
-wss.on('connection', (ws) => {
-  console.log('Android client connected');
-  clients.add(ws);
-
-  ws.on('close', () => {
-    clients.delete(ws);
-    console.log('Android client disconnected');
-  });
+const io = new Server(server, {
+  cors: {
+    origin: "*", // or specify your frontend domain
+    methods: ["GET", "POST"],
+  },
 });
 
-app.get('/', (req, res) => { 
-      res.status(200).send({ "text": "Hello iam alive" });
+app.use(cors());
+app.use(express.json()); // to parse JSON POST body
 
-})
+// Store socket list if needed for targeting
+io.on("connection", (socket) => {
+  console.log("Android or Web Client connected:", socket.id);
+});
 
-app.post('/send-notification', (req, res) => {
+// 🔥 POST endpoint to trigger a notification from Web App
+app.post("/send-notification", (req, res) => {
   const { title, message } = req.body;
-  const body = { title, message};
-  console.log('📨 Received notificatio', body) ;
-  // Save to notifications list
-  notifications.push(body);
- 
-  // Send to connected clients
-  clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(body));
-    }
-  });
- 
-  res.status(200).send({ success: true });
-});
- 
- 
+  console.log('📨 Received notification title', title) ;
+  console.log('📨 Received notification message', message) ;
 
+  if (!title || !message) {
+    return res.status(400).json({ error: "Missing title or message" });
+  }
 
-app.get('/notifications', (req, res) => {
-  res.status(200).json(notifications);
+  console.log("📨 Web App sent a notification:", title, message);
+
+  // Broadcast to all connected clients
+  io.emit("notification", { title, message });
+
+  res.status(200).json({ success: true });
 });
 
 server.listen(3000, () => {
-  console.log('Server listening on http://localhost:3000');
+  console.log("🚀 Server running at http://localhost:3000");
 });
-
